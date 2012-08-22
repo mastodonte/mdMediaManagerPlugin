@@ -19,7 +19,7 @@ class MdFileHandler {
      * @param <string> $path
      * @return <string>
      */
-    public static function upload($FILES, $path = LOCAL_PATH, $keep_real_name = false){
+    public static function upload($FILES, $path = LOCAL_PATH, $keep_real_name = false, $upload_name = "upload"){
 
         $POST_MAX_SIZE = ini_get ( 'post_max_size' );
         $unit = strtoupper ( substr ( $POST_MAX_SIZE, - 1 ) );
@@ -33,7 +33,6 @@ class MdFileHandler {
         
         // Settings
         $save_path = self::checkPathFormat($path); //The path were we will save the file (getcwd() may not be reliable and should be tested in your environment)
-        $upload_name = "upload";
         $max_file_size_in_bytes = 2147483647; // 2GB in bytes
         $extension_whitelist = self::$whiteList; // Allowed file extensions
         $valid_chars_regex = '.A-Z0-9_ !@#$%^&()+={}\[\]\',~`-'; // Characters allowed in the file name (in a Regular Expression format)
@@ -262,3 +261,4 @@ function cmpName($a, $b){
     return (strtoupper($a->getName()) < strtoupper($b->getName())) ? -1 : 1;
 
 }
+
