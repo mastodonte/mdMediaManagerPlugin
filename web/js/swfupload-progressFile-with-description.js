@@ -31,7 +31,7 @@ function FileProgress(file, targetID) {
 
         var divContent = document.createElement("div");
 
-        divContent.innerHTML = "<form action='/backend.php/uploader/updateImageDescription' name='form_desc' id='form_desc' class='form_desc' ><input style='display:none;' type='text' name='description' onblur='saveImageDescription(this)'><input type='hidden' name='imageId' /></form>"
+        divContent.innerHTML = "<form action='/admin.php/uploader/updateImageDescription' name='form_desc' id='form_desc' class='form_desc' ><input style='display:none;' type='text' name='description' onblur='saveImageDescription(this)'><input type='hidden' name='imageId' /></form>"
 
         progressText.appendChild(divContent);
 
@@ -167,7 +167,7 @@ function saveImageDescription(obj){
 
 function saveImageToAlbum(selectObj, imageId){
     var albumId = selectObj.options[selectObj.selectedIndex].value;
-    var url = '/backend.php/uploader/updateImageAlbum';
+    var url = '/admin.php/uploader/updateImageAlbum';
     var myAjax = new Ajax.Request(url, {
        
        parameters: 'imageId='+imageId+'&albumId='+albumId,
