@@ -27,7 +27,7 @@ class mdWebImageActions extends sfActions
         list($route, $options) = mdWebImage::getParametersFromQueryString($param);
 
         if ($route)
-        {
+        {            
             $filePath = mdFileMagickHandler::process($route, $options);
 
             $last_modified_time = @filemtime($filePath);

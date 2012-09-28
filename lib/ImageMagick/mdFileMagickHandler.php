@@ -1,7 +1,8 @@
 <?php
 class mdFileMagickHandler
 {
-
+    private static $_adapter = 'ImageMagick';
+  
     /**
      * Se encarga de procesar la imagen creandola en caso de ser necesario
      * segun los parametros pasados en $options.
@@ -18,6 +19,8 @@ class mdFileMagickHandler
      */
     public static function process($route, $options)
     {
+        self::$_adapter = sfConfig::get('app_sfImageTransformPlugin_default_adapter', 'ImageMagick');
+
         if(!isset($options[mdWebOptions::CODE]) )
         {
             if(isset($options[mdWebOptions::WIDTH]) || isset($options[mdWebOptions::HEIGHT]))
@@ -32,85 +35,139 @@ class mdFileMagickHandler
         {
             return $route; //devolver ruta original
         }        
-        
-        try{
 
-            $cacheFile  = mdFileCacheHandler::getCacheFile($route, $options);
+        if(self::$_adapter == 'ImageMagick'){
+          try{
 
-            if(!file_exists($cacheFile))
-            {
+              $cacheFile  = mdFileCacheHandler::getCacheFile($route, $options);
 
-                $mdMagick   = new mdMagick($route, $cacheFile);
-								sfContext::getInstance()->getLogger()->info('{mdFileMagickHandler1} '.$route);
-                if( sfConfig::get( 'sf_image_cuality_change', false ) )
-                {
-                    $cuality = (int) sfConfig::get( 'sf_image_cuality_porcent', 75 ) ;
-                    $mdMagick->setImageQuality($cuality);
-                }
-								sfContext::getInstance()->getLogger()->info('{mdFileMagickHandler2} switch : ' . $options[mdWebOptions::CODE]);
-                switch($options[mdWebOptions::CODE])
-                {
-                    case mdWebCodes::RESIZE:
+              if(!file_exists($cacheFile))
+              {
 
-                        list($width, $height, $exactDimentions) = self::processParameters($options);
+                  $mdMagick   = new mdMagick($route, $cacheFile);
+                                                                  sfContext::getInstance()->getLogger()->info('{mdFileMagickHandler1} '.$route);
+                  if( sfConfig::get( 'sf_image_cuality_change', false ) )
+                  {
+                      $cuality = (int) sfConfig::get( 'sf_image_cuality_porcent', 75 ) ;
+                      $mdMagick->setImageQuality($cuality);
+                  }
+                                                                  sfContext::getInstance()->getLogger()->info('{mdFileMagickHandler2} switch : ' . $options[mdWebOptions::CODE]);
+                  switch($options[mdWebOptions::CODE])
+                  {
+                      case mdWebCodes::RESIZE:
 
-                        $mdMagick->resize($width, $height, $exactDimentions);
+                          list($width, $height, $exactDimentions) = self::processParameters($options);
 
+                          $mdMagick->resize($width, $height, $exactDimentions);
+
+                          break;
+                      case mdWebCodes::RESIZECROP:
+
+                          list($width, $height) = self::processParameters($options);
+
+                          $mdMagick->resizeExactly($width, $height);
+
+                          break;
+
+                            case mdWebCodes::CROPRESIZE:
+                                 list($width, $height) = self::processParameters($options);
+
+                                 $mdMagick->cropresize($width, $height);
+
+                                 break;
+
+                      case mdWebCodes::PERSPECTIVE:
+
+                          throw new Exception('operation not implemented yet', 102);
+
+                          break;
+                      case mdWebCodes::ROUND_CORNERS:
+
+                              list($round) = self::processParameters($options);
+
+                                                                                                                  sfContext::getInstance()->getLogger()->info('{mdFileMagickHandler3} roundCorners angle: ' . $round);
+                              $mdMagick->roundCorners($round);
+
+                          break;
+                      case mdWebCodes::CROP:
+
+                              list($width, $height, $top, $left, $gravity) = self::processParameters($options);
+
+                              $mdMagick->crop($width, $height, $top, $left, $gravity);
+
+                         break;
+                      default:
+
+                          throw new Exception('operation not implemented yet', 102);
+
+                          break;
+                  }
+
+                  if (is_readable($cacheFile))
+                  {
+                      chmod($cacheFile, 0775);
+                  }
+              }
+
+              return $cacheFile;
+
+          }catch(Exception $e){
+
+              throw $e;
+
+          }
+          
+        }else{
+          
+          try{
+
+              $cacheFile  = mdFileCacheHandler::getCacheFile($route, $options);
+
+              if(!file_exists($cacheFile))
+              {
+                  switch($options[mdWebOptions::CODE])
+                  {
+                      case mdWebCodes::RESIZE:
+                          list($width, $height, $exactDimentions) = self::processParameters($options);
+                          $img = new sfImage($route);
+
+                          $img->resize($width, $height);
+
+                          $img->saveAs($cacheFile);
                         break;
-                    case mdWebCodes::RESIZECROP:
+                      case mdWebCodes::CROP:
+                          list($width, $height, $top, $left, $gravity) = self::processParameters($options);
+                        
+                          $img = new sfImage($route);
 
-                        list($width, $height) = self::processParameters($options);
+                          $img->resize($width, $height);
 
-                        $mdMagick->resizeExactly($width, $height);
-
+                          $img->saveAs($cacheFile);                        
                         break;
+                      case mdWebCodes::CROPRESIZE:
+                      case mdWebCodes::RESIZECROP:
+                          list($width, $height) = self::processParameters($options);
+                        
+                          $img = new sfImage($route);
 
-	                  case mdWebCodes::CROPRESIZE:
-	                       list($width, $height) = self::processParameters($options);
+                          $img->resize($width, $height);
 
-	                       $mdMagick->cropresize($width, $height);
+                          $img->saveAs($cacheFile);
 
-	                       break;
-
-                    case mdWebCodes::PERSPECTIVE:
-
-                        throw new Exception('operation not implemented yet', 102);
-
+                          break;
+                      default: return $route;
                         break;
-                    case mdWebCodes::ROUND_CORNERS:
+                  }
+                  
+              }
+             
+              return $cacheFile;
 
-                            list($round) = self::processParameters($options);
+          }catch(Exception $e){
 
-														sfContext::getInstance()->getLogger()->info('{mdFileMagickHandler3} roundCorners angle: ' . $round);
-                            $mdMagick->roundCorners($round);
-                            
-                        break;
-                    case mdWebCodes::CROP:
+              throw $e;
 
-                            list($width, $height, $top, $left, $gravity) = self::processParameters($options);
-
-                            $mdMagick->crop($width, $height, $top, $left, $gravity);
-
-                       break;
-                    default:
-
-                        throw new Exception('operation not implemented yet', 102);
-
-                        break;
-                }
-
-                if (is_readable($cacheFile))
-                {
-                    chmod($cacheFile, 0775);
-                }
-            }
-
-            return $cacheFile;
-
-        }catch(Exception $e){
-
-            throw $e;
-            
+          }
         }
         
     }
