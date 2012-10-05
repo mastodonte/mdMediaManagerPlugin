@@ -131,7 +131,7 @@ class mdFileMagickHandler
                           list($width, $height, $exactDimentions) = self::processParameters($options);
                           $img = new sfImage($route);
 
-                          $img->resize($width, $height);
+                          $img->resize($width, $height, true, true);
 
                           $img->saveAs($cacheFile);
                         break;
@@ -150,7 +150,7 @@ class mdFileMagickHandler
                         
                           $img = new sfImage($route);
 
-                          $img->resize($width, $height);
+                          $img->resizecrop($width, $height);
 
                           $img->saveAs($cacheFile);
 
